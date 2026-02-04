@@ -7,3 +7,5 @@ ring.py
 search_for_best_series.py
 search_for_best_topology.py
 visuallize.py
+videos
+.venv
