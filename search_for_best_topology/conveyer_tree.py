@@ -95,17 +95,17 @@ class Node(object):
         if parent_node is None:
             return
 
-        type_used = set()
-        for i, child in enumerate(parent_node.children):
-            if i != chosen_path[-1]:
-                type_used.add(child.type)
+        # type_used = set()
+        # for i, child in enumerate(parent_node.children):
+        #     if i != chosen_path[-1]:
+        #         type_used.add(child.type)
 
         new_node = Node.create_random_tree(
             chosen_node.input_val,
             chosen_node.depth,
             max_depth,
-            parent_node.type
-            
+            parent_node.type, 
+            # type_used            
         )
 
         parent_node.children[chosen_path[-1]] = new_node
@@ -207,7 +207,7 @@ class Node(object):
                 case NodeType.STRUCTURE_A:
                     c = {0, 2, 3, 4, 5}
                 case NodeType.STRUCTURE_B:
-                    c = {0, 1, 3, 4, 5}
+                    c = {1, 2, 3, 4, 5}
                 case _:
                     raise NotImplementedError()
                 
@@ -387,10 +387,7 @@ class Node(object):
         
         node_1_copy = node_1.deep_copy()
         node_2_copy = node_2.deep_copy()
-        
-        node_1_copy.update_input_val(node_2.input_val)
-        node_2_copy.update_input_val(node_1.input_val)
-        
+                
         # replace
         success_1 = new_tree_1.replace_node(path_1, node_2_copy)
         success_2 = new_tree_2.replace_node(path_2, node_1_copy)
@@ -399,7 +396,53 @@ class Node(object):
             return tree_1.deep_copy(), tree_2.deep_copy()
         
         return new_tree_1, new_tree_2
+
+    @staticmethod
+    def is_valid(tree: "Node") -> bool:
+        # SPLITTER_2 = enum.auto()
+        # SPLITTER_3 = enum.auto()
+        # STRUCTURE_A = enum.auto()
+        # STRUCTURE_B = enum.auto()
+        # OUTPUT = enum.auto()
+        # DISCARD = enum.auto()
+        output_n = sum(child.type == NodeType.OUTPUT for child in tree.children)
+        discard_n = sum(child.type == NodeType.DISCARD for child in tree.children)
+        if output_n > 1 or discard_n > 1:
+            return False
         
+        match tree.type:
+            case NodeType.SPLITTER_2:
+                if len(tree.children) != 2:
+                    return False
+                
+                return all(Node.is_valid(child) for child in tree.children)
+            case NodeType.SPLITTER_3:
+                if len(tree.children) != 3:
+                    return False
+                
+                return all(Node.is_valid(child) for child in tree.children)
+                
+            case NodeType.STRUCTURE_A:
+                if any(child.type == NodeType.SPLITTER_3 for child in tree.children):
+                    return False
+                
+                return all(Node.is_valid(child) for child in tree.children)
+            
+            case NodeType.STRUCTURE_B:
+                if any(child.type == NodeType.SPLITTER_2 for child in tree.children):
+                    return False
+                
+                return all(Node.is_valid(child) for child in tree.children)
+            
+            case NodeType.OUTPUT | NodeType.DISCARD:
+                if len(tree.children) != 0:
+                    return False
+                
+                return True
+            
+            case _:
+                raise NotImplementedError()
+
     def to_string(self) -> str:
         return self.__repr__()
 
@@ -437,9 +480,12 @@ def get_val_depth(input_val: Fraction) -> int:
     return m + n
 
 if __name__ == '__main__':
-    random_tree = Node.create_random_tree(max_depth=3)
-    print(random_tree.format(0))
+    tree_1 = Node.create_random_tree(max_depth=3)
+    tree_2 = Node.create_random_tree(max_depth=3)
     for _ in range(10):
-        random_tree.mutate(max_depth=3)
-        print(random_tree.format(0))
+        tree_1, tree_2 = Node.crossover_trees(tree_1, tree_2)
+        print(tree_1)
         print()
+        print(tree_2)
+        print('=' * 60)
+    

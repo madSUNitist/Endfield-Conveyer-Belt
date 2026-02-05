@@ -10,10 +10,10 @@ from conveyer_tree import Node
 class Config(object):
     # tree
     INPUT_VAL: Fraction = Fraction(1, 1)
-    MAX_DEPTH: int = 8
+    MAX_DEPTH: int = 5
 
     # target
-    TARGET_VAL: float = 0.625
+    TARGET_VAL: float = 0.4
     OBJECTIVES: int = 2
 
     # NSGA-II
@@ -233,7 +233,13 @@ class NSGA2(object):
             if random.random() > self.mutation_rate:
                 child_2 = self.mutation(child_2)
         
-            offspring.extend([child_1, child_2])
+        
+            if Node.is_valid(child_1.chromosome) and Node.is_valid(child_1.chromosome):
+                offspring.extend([child_1, child_2])
+            elif Node.is_valid(child_1.chromosome):
+                offspring.append(child_1)
+            elif Node.is_valid(child_2.chromosome):
+                offspring.append(child_2)
         
         return offspring[:self.population_size]
     
@@ -301,7 +307,7 @@ class NSGA2(object):
         for individual in front:
             tree = individual.chromosome
             tree_string = tree.to_string()
-            if tree_string not in existing_tree:
+            if tree_string not in existing_tree and Node.is_valid(tree):
                 drop_duplicate_front.append(individual)
                 existing_tree.add(tree_string)
 
