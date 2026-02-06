@@ -13,12 +13,14 @@ class Config(object):
     MAX_DEPTH: int = 5
 
     # target
-    TARGET_VAL: float = 0.4
+    # TARGET_VAL: float = (np.sqrt(5) - 1) / 2
+    TARGET_VAL: float = 1 / np.e
+    # TARGET_VAL: float = 3/7
     OBJECTIVES: int = 2
 
     # NSGA-II
-    MUTATION_RATE = 0.2
-    CROSSOVER_RATE = 0.3
+    MUTATION_RATE = 0.8
+    CROSSOVER_RATE = 0.8
     TOURNAMENT_SIZE = 5
 
 # Individual representing one solution
@@ -228,9 +230,9 @@ class NSGA2(object):
                 child_1 = Individual(parent_1.chromosome.deep_copy())
                 child_2 = Individual(parent_2.chromosome.deep_copy())
             
-            if random.random() > self.mutation_rate:
+            if random.random() <= self.mutation_rate:
                 child_1 = self.mutation(child_1)
-            if random.random() > self.mutation_rate:
+            if random.random() <= self.mutation_rate:
                 child_2 = self.mutation(child_2)
         
         

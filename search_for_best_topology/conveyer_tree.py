@@ -53,11 +53,13 @@ class Node(object):
     def get_cost(self):
         if self.cost is None:
             match self.type:
-                case NodeType.SPLITTER_2 | NodeType.SPLITTER_3:
+                case NodeType.SPLITTER_2:
+                    cost = 1
+                case NodeType.SPLITTER_3:
+                    cost = 1
+                case NodeType.STRUCTURE_A:
                     cost = 1
                 case NodeType.STRUCTURE_B:
-                    cost = 3
-                case NodeType.STRUCTURE_A:
                     cost = 2
                 case NodeType.OUTPUT | NodeType.DISCARD:
                     cost = 0
