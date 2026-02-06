@@ -9,8 +9,8 @@ from functools import lru_cache
 class NodeType(enum.Enum):
     SPLITTER_2 = enum.auto()
     SPLITTER_3 = enum.auto()
-    STRUCTURE_A = enum.auto()
     STRUCTURE_B = enum.auto()
+    STRUCTURE_A = enum.auto()
     OUTPUT = enum.auto()
     DISCARD = enum.auto()
 
@@ -35,9 +35,9 @@ class Node(object):
                 out_str = 'S2'
             case NodeType.SPLITTER_3:
                 out_str = 'S3'
-            case NodeType.STRUCTURE_A:
-                out_str = 'SA'
             case NodeType.STRUCTURE_B:
+                out_str = 'SA'
+            case NodeType.STRUCTURE_A:
                 out_str = 'SB'
             case NodeType.OUTPUT:
                 out_str = 'O'
@@ -55,10 +55,10 @@ class Node(object):
             match self.type:
                 case NodeType.SPLITTER_2 | NodeType.SPLITTER_3:
                     cost = 1
-                case NodeType.STRUCTURE_A:
-                    cost = 4
                 case NodeType.STRUCTURE_B:
                     cost = 3
+                case NodeType.STRUCTURE_A:
+                    cost = 2
                 case NodeType.OUTPUT | NodeType.DISCARD:
                     cost = 0
             
@@ -119,10 +119,10 @@ class Node(object):
             case NodeType.SPLITTER_3:
                 for child in self.children:
                     child.update_input_val(self.input_val / 3)
-            case NodeType.STRUCTURE_A:
+            case NodeType.STRUCTURE_B:
                 self.children[0].update_input_val(self.input_val * Fraction(3, 4))
                 self.children[1].update_input_val(self.input_val * Fraction(1, 4))
-            case NodeType.STRUCTURE_B:
+            case NodeType.STRUCTURE_A:
                 self.children[0].update_input_val(self.input_val * Fraction(2, 3))
                 self.children[1].update_input_val(self.input_val * Fraction(1, 3))
             case NodeType.OUTPUT | NodeType.DISCARD:
@@ -204,9 +204,9 @@ class Node(object):
                     c = {0, 1, 2, 3}
                 case NodeType.SPLITTER_2 | NodeType.SPLITTER_3:
                     c = {0, 1, 2, 3, 4, 5}
-                case NodeType.STRUCTURE_A:
-                    c = {0, 2, 3, 4, 5}
                 case NodeType.STRUCTURE_B:
+                    c = {0, 2, 3, 4, 5}
+                case NodeType.STRUCTURE_A:
                     c = {1, 2, 3, 4, 5}
                 case _:
                     raise NotImplementedError()
@@ -280,30 +280,10 @@ class Node(object):
                     input_val * Fraction(3, 4), 
                     depth=depth + 1, 
                     max_depth=max_depth, 
-                    current_type=NodeType.STRUCTURE_A
-                )
-                child_2 = Node.create_random_tree(
-                    input_val * Fraction(1, 4), 
-                    depth=depth + 1, 
-                    max_depth=max_depth, 
-                    current_type=NodeType.STRUCTURE_A, 
-                    type_used={child_1.type}
-                )
-                return Node(
-                    [child_1, child_2], 
-                    input_val, 
-                    NodeType.STRUCTURE_A, 
-                    depth
-                )
-            case 3:
-                child_1 = Node.create_random_tree(
-                    input_val * Fraction(2, 3), 
-                    depth=depth + 1, 
-                    max_depth=max_depth, 
                     current_type=NodeType.STRUCTURE_B
                 )
                 child_2 = Node.create_random_tree(
-                    input_val * Fraction(1, 3),     
+                    input_val * Fraction(1, 4), 
                     depth=depth + 1, 
                     max_depth=max_depth, 
                     current_type=NodeType.STRUCTURE_B, 
@@ -313,6 +293,26 @@ class Node(object):
                     [child_1, child_2], 
                     input_val, 
                     NodeType.STRUCTURE_B, 
+                    depth
+                )
+            case 3:
+                child_1 = Node.create_random_tree(
+                    input_val * Fraction(2, 3), 
+                    depth=depth + 1, 
+                    max_depth=max_depth, 
+                    current_type=NodeType.STRUCTURE_A
+                )
+                child_2 = Node.create_random_tree(
+                    input_val * Fraction(1, 3),     
+                    depth=depth + 1, 
+                    max_depth=max_depth, 
+                    current_type=NodeType.STRUCTURE_A, 
+                    type_used={child_1.type}
+                )
+                return Node(
+                    [child_1, child_2], 
+                    input_val, 
+                    NodeType.STRUCTURE_A, 
                     depth
                 )
             case 4:
@@ -401,8 +401,8 @@ class Node(object):
     def is_valid(tree: "Node") -> bool:
         # SPLITTER_2 = enum.auto()
         # SPLITTER_3 = enum.auto()
-        # STRUCTURE_A = enum.auto()
         # STRUCTURE_B = enum.auto()
+        # STRUCTURE_A = enum.auto()
         # OUTPUT = enum.auto()
         # DISCARD = enum.auto()
         output_n = sum(child.type == NodeType.OUTPUT for child in tree.children)
@@ -422,13 +422,13 @@ class Node(object):
                 
                 return all(Node.is_valid(child) for child in tree.children)
                 
-            case NodeType.STRUCTURE_A:
+            case NodeType.STRUCTURE_B:
                 if any(child.type == NodeType.SPLITTER_3 for child in tree.children):
                     return False
                 
                 return all(Node.is_valid(child) for child in tree.children)
             
-            case NodeType.STRUCTURE_B:
+            case NodeType.STRUCTURE_A:
                 if any(child.type == NodeType.SPLITTER_2 for child in tree.children):
                     return False
                 
@@ -449,15 +449,15 @@ class Node(object):
     def format(self, indent: int) -> str:
         match self.type:
             case NodeType.SPLITTER_2:
-                out_str = '  ' * self.depth + 'Splitter(2) [v=%.6f]' % self.input_val
+                out_str = '  ' * self.depth + 'Splitter(2) [v=%s]' % self.input_val
             case NodeType.SPLITTER_3:
-                out_str = '  ' * self.depth + 'Splitter(3) [v=%.6f]' % self.input_val
-            case NodeType.STRUCTURE_A:
-                out_str = '  ' * self.depth + 'Structure A [v=%.6f]' % self.input_val
+                out_str = '  ' * self.depth + 'Splitter(3) [v=%s]' % self.input_val
             case NodeType.STRUCTURE_B:
-                out_str = '  ' * self.depth + 'Structure B [v=%.6f]' % self.input_val
+                out_str = '  ' * self.depth + 'Structure B [v=%s]' % self.input_val
+            case NodeType.STRUCTURE_A:
+                out_str = '  ' * self.depth + 'Structure A [v=%s]' % self.input_val
             case NodeType.OUTPUT:
-                out_str = '  ' * self.depth + 'Output [v=%.6f]' % self.input_val
+                out_str = '  ' * self.depth + 'Output [v=%s]' % self.input_val
             case NodeType.DISCARD:
                 out_str = '  ' * self.depth + 'Discard'
         
